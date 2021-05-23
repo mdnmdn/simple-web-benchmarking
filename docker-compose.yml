@@ -1,0 +1,84 @@
+version: "3.3"
+services:
+  node-express:
+    image: node:14.5-stretch
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      mode: development
+    ports:
+      - 9051:3000
+    depends_on:
+      - redis
+    volumes:
+      - ./node-express:/app
+    command: sh -c "cd app && npm i && npx nodemon --ext js,json,env,gql index.js"
+  node-fastify:
+    image: node:14.5-stretch
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      mode: development
+    ports:
+      - 9052:3000
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./node-fastify:/app
+    command: sh -c "cd app && npm i && npx nodemon --ext js,json,env,gql index.js"
+  python-flask:
+    image:  python:3.9-slim-buster
+    environment:
+      FLASK_APP: main.py
+    ports:
+      - 9053:8000
+    depends_on:
+      - redis
+      - postgres
+    command: sh -c "cd /app; pip install -r requirements.txt; gunicorn main:app --reload -b 0.0.0.0:8000"
+    volumes:
+       - ./python-flask:/app:cached
+       #- nebapi-py-libs:/root/.cache/pip
+  python-fastapi:
+    image:  python:3.9-slim-buster
+    environment:
+      FLASK_APP: main.py
+    ports:
+      - 9054:8000
+    depends_on:
+      - redis
+      - postgres
+    command: sh -c "cd /app; pip install -r requirements.txt; uvicorn main:app --reload --host 0.0.0.0"
+    volumes:
+       - ./python-fastapi:/app:cached
+       #- nebapi-py-libs:/root/.cache/pip
+  go-bare:
+    image: golang:1.16-alpine
+    ports:
+      - 9055:5000
+    depends_on:
+     - redis
+     - postgres
+    volumes:
+      - ./go-bare:/go/src/app
+    command: sh -c 'go get github.com/pilu/fresh; cd /go/src/app; fresh'
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6389:6379"
+    volumes:
+      - ./data/docker/redis:/data/redis
+
+  postgres:
+    image: postgres:11.6-alpine
+    environment:
+      POSTGRES_PASSWORD: io
+      POSTGRES_DB: testdb 
+    ports:
+      - '5435:5432'
+    volumes:
+      - ./data/docker/pg:/var/lib/postgresql/data
+      - ./data/init/pg:/docker-entrypoint-initdb.d
+
+#volumes:
