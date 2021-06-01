@@ -1,7 +1,7 @@
 from random import randint
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
-from asyncio_redis import Connection
+from asyncio_redis import Connection, Pool
 
 app = FastAPI()
 
@@ -14,6 +14,7 @@ def randomKey():
 async def startup():
   global connection
   connection = await Connection.create(host="redis")
+  # connection = await Pool.create(host="redis")
 
 @app.get("/", response_class=PlainTextResponse)
 def read_root():
